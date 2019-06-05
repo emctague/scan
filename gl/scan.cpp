@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <thread>
+#include <mutex>
 
 const char *vertexSource =
 #include "vertex.glsl"
@@ -15,45 +16,84 @@ const char *fragmentSource =
 #include "fragment.glsl"
 
 
+/**
+ * The OpenGL Application.
+ */
 class App {
 public:
+    /// Initialize and run the application
     void run ();
+
+    /// Clean up the application
     ~App ();
 
 private:
+    /// Create the window context
     void makeContext ();
+
+    /// Create the shader program
     void makeProgram ();
+
+    /// Compile and link a shader.
     unsigned makeShader (const char** data, unsigned type);
+
+    /// Create the mesh objects.
     void makeVAO ();
-    void pollNewDepths ();
+
+    /// Spawn the input-reading thread.
+    void makeInputThread ();
+
+    /// Update mesh when notified of new data.
+    void updateMesh ();
+
+    /// The window handle
     GLFWwindow *window;
-    glm::mat4 projection;
-    glm::mat4 view;
+
+    /// Projection and view matrices for rendering - model matrix is not needed
+    /// as the model is generated with in-place coordinates.
+    glm::mat4 projection, view;
+
+    /// Vertex-related objects and shader program handle
     unsigned vao, vbo, program;
+
+    /// Number of vertices in the VBO
     int vertCount;
 
-    // Current list of read distances
+    /// Current list of distances read from the input source.
     std::vector<float> distances;
 
-    bool threadShouldDie = false;
+    /// Set to true when new data is available.
+    bool notifyNewData = false;
+
+    /// Locks during changes to distance data.
+    std::mutex lockNewData;
+
+    /// Thread used to manage stdin input
     std::thread inputThread;
 };
 
+/**
+ * Initializes the application and executes its main loop.
+ */
 void App::run ()
 {
     makeContext ();
     makeProgram ();
     makeVAO ();
+    makeInputThread ();
 
     while (!glfwWindowShouldClose (window)) {
         glfwPollEvents ();
-        pollNewDepths ();
+        updateMesh ();
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLES, 0, vertCount);
         glfwSwapBuffers (window);
     }
 }
 
+/**
+ * Creates a Window and OpenGL Context used to render.
+ */
 void App::makeContext ()
 {
     glfwInit ();
@@ -68,6 +108,9 @@ void App::makeContext ()
     glEnable (GL_DEPTH_TEST);
 }
 
+/**
+ * Creates a shader program used to shade the generated mesh.
+ */
 void App::makeProgram ()
 {
     program = glCreateProgram ();
@@ -90,6 +133,10 @@ void App::makeProgram ()
     }
 }
 
+/**
+ * Compiles a GLSL shader given its source and shader type.
+ * Type can be GL_VERTEX_SHADER or GL_FRAGMENT_SHADER.
+ */
 unsigned App::makeShader (const char **source, unsigned type)
 {
     unsigned shader = glCreateShader (type);
@@ -109,6 +156,10 @@ unsigned App::makeShader (const char **source, unsigned type)
     return shader;
 }
 
+/**
+ * Creates the VAO and VBO objects, as well as attribute pointers, used to
+ * render the mesh to the screen.
+ */
 void App::makeVAO ()
 {
     glGenVertexArrays(1, &vao);
@@ -126,8 +177,14 @@ void App::makeVAO ()
     vertCount = 0;
 }
 
+
+/**
+ * Handles cleanup of the application.
+ */
 App::~App ()
 {
+    inputThread.detach();
+
     glDeleteProgram (program);
     glDeleteBuffers (1, &vbo);
     glDeleteVertexArrays (1, &vao);
@@ -135,16 +192,40 @@ App::~App ()
     glfwTerminate ();
 }
 
-void App::pollNewDepths ()
+
+/**
+ * Spawns a thread which constantly polls stdin for new distances and notifies
+ * the main thread when data is acquired.
+ */
+void App::makeInputThread ()
 {
     // Check for new vertices on stdin
-    // // TODO: I have absolutely no damn idea how to make it nonblocking
+    inputThread = std::thread([&]
+    {
+        float value;
 
-    float value;
-    std::cin >> value;
-    std::cout << "[New Value] " << value << std::endl;
-    distances.push_back(value);
-    // TODO: Rebuild entire 3D model
+        while (std::cin >> value) {
+            lockNewData.lock();
+            std::cout << "[New Value] " << value << std::endl;
+            distances.push_back(value);
+            notifyNewData = true;
+            lockNewData.unlock();
+        }
+    });
+}
+
+/**
+ * Checks if new data has been made available, and generates a new mesh for
+ * on-screen viewing if necessary.
+ */
+void App::updateMesh ()
+{
+    if (notifyNewData) {
+        lockNewData.lock();
+        std::cout << "Regenerating mesh here..." << std::endl;
+        notifyNewData = false;
+        lockNewData.unlock();
+    }
 }
 
 int
