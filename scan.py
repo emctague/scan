@@ -9,11 +9,11 @@ def task(name, resname):
     def func_decorator(func):
         def func_wrapper(*args, **kwargs):
             global indlevel
-            print("%s[Begin %s]" % (("\n" * indlevel), name), file=sys.stderr)
+            print("%s[Begin %s]" % (("\t" * indlevel), name), file=sys.stderr)
             indlevel += 1
             result = func(*args, **kwargs)
             indlevel -= 1
-            print("%s[End %s=%s]" % (("\n" * indlevel), resname, result), file=sys.stderr)
+            print("%s[End %s=%s]" % (("\t" * indlevel), resname, result), file=sys.stderr)
             return result
         return func_wrapper
     return func_decorator
@@ -25,7 +25,7 @@ PIN_SERVO=13
 def getDistance():
     GPIO.setup(PIN_PING, GPIO.OUT)
     GPIO.output(PIN_PING, False)
-    time.sleep(0.5)
+    time.sleep(2)
     GPIO.output(PIN_PING, True)
     time.sleep(0.000005)
     GPIO.output(PIN_PING, False)
@@ -50,10 +50,17 @@ def getLongDistance():
 
 @task("Poll All Data", "complete")
 def pollData():
+    GPIO.setup(PIN_SERVO, GPIO.OUT)
+    pwm = GPIO.PWM(PIN_SERVO, 1000)
 
-    for i in range(0, 360):
-        print(getLongDistance())
+    for i in range(0, 100):
+        #print(getLongDistance())
+        pwm.start(i)
+        time.sleep(0.3)
+        pwm.stop()
+
         # TODO: Step servo
 
     return true
 
+pollData()

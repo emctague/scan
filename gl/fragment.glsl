@@ -19,5 +19,6 @@ main ()
     vec3 ambient = 0.1 * vec3(0.9, 0.9, 1.0);
     vec3 result = (ambient + diffuse) * objectColor;
     FragColor = vec4(result, 1.0);
+    FragColor = vec4(1.0, 1.0, 1.0, 1.0);
 }
 )HERE";

@@ -1,6 +1,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <iostream>
 #include <vector>
 #include <sys/select.h>
@@ -43,6 +47,9 @@ private:
     /// Spawn the input-reading thread.
     void makeInputThread ();
 
+    /// Create projection matrix
+    void makeProjection ();
+
     /// Update mesh when notified of new data.
     void updateMesh ();
 
@@ -81,6 +88,7 @@ void App::run ()
     makeProgram ();
     makeVAO ();
     makeInputThread ();
+    makeProjection ();
 
     while (!glfwWindowShouldClose (window)) {
         glfwPollEvents ();
@@ -177,6 +185,14 @@ void App::makeVAO ()
     vertCount = 0;
 }
 
+void App::makeProjection ()
+{
+	projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
+	view = glm::mat4(1.0f);
+	glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+	glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
+}
+
 
 /**
  * Handles cleanup of the application.
@@ -223,6 +239,92 @@ void App::updateMesh ()
     if (notifyNewData) {
         lockNewData.lock();
         std::cout << "Regenerating mesh here..." << std::endl;
+
+	std::vector<glm::vec2> points;
+	std::vector<float> vertices;
+
+	// Convert distances to points
+	for (int i = 0; i < distances.size(); i++) {
+		glm::vec2 norm (1.0f, 0.0f);
+		float angle = i / distances.size() * (glm::pi<float>() * 2);
+		norm = glm::rotate (norm, angle);
+		glm::vec2 point = norm * distances[i];
+		points.push_back(point);
+	}
+
+	const float HEIGHT = 10;
+
+	// Triangulate points
+	for (int i = 0; i < points.size(); i++) {
+		int otheri = i - 1;
+		if (i == 0) otheri = points.size() - 1;
+
+		// Triangle A
+		// Bottom right -> bottom left -> top right
+		vertices.push_back(points[i].x);
+		vertices.push_back(points[i].y);
+		vertices.push_back(0);
+
+		// Fake normals for now
+		vertices.push_back(0);
+		vertices.push_back(0);
+		vertices.push_back(0);
+
+		vertices.push_back(points[otheri].x);
+		vertices.push_back(points[otheri].y);
+		vertices.push_back(0);
+
+		// fame nrm for now
+		vertices.push_back(0);
+		vertices.push_back(0);
+		vertices.push_back(0);
+
+		vertices.push_back(points[i].x);
+		vertices.push_back(points[i].y);
+		vertices.push_back(HEIGHT);
+
+		// fame nrm for now
+		vertices.push_back(0);
+		vertices.push_back(0);
+		vertices.push_back(0);
+
+		// Triangle B
+		// Bottom left -> top left -> top right
+		vertices.push_back(points[otheri].x);
+		vertices.push_back(points[otheri].y);
+		vertices.push_back(0);
+
+		// fame nrm for now
+		vertices.push_back(0);
+		vertices.push_back(0);
+		vertices.push_back(0);
+
+		vertices.push_back(points[otheri].x);
+		vertices.push_back(points[otheri].y);
+		vertices.push_back(HEIGHT);
+
+		// fame nrm for now
+		vertices.push_back(0);
+		vertices.push_back(0);
+		vertices.push_back(0);
+
+		vertices.push_back(points[i].x);
+		vertices.push_back(points[i].y);
+		vertices.push_back(HEIGHT);
+
+		// fame nrm for now
+		vertices.push_back(0);
+		vertices.push_back(0);
+		vertices.push_back(0);
+	}
+
+	glBindVertexArray(vao);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
+
+	vertCount = vertices.size();
+
+        std::cout << "Done Regenerating Mesh" << std::endl;
+
         notifyNewData = false;
         lockNewData.unlock();
     }
