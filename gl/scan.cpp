@@ -109,6 +109,10 @@ void App::makeContext ()
     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE);
+    if (GLEW_KHR_debug) {
+	    std::cout << "DBGO" << std::endl;
+	    glfwWindowHint (GLFW_OPENGL_DEBUG_CONTEXT, 1);
+    }
     window = glfwCreateWindow (512, 512, "Scan", nullptr, nullptr);
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
