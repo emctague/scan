@@ -12,6 +12,6 @@ target_link_libraries(scan ${GLEW_LIBRARIES} glfw  ${glm_LIBRARIES} ${OPENGL_LIB
 target_link_directories(scan PUBLIC glfw)
 target_include_directories(scan PUBLIC glfw ${GLEW_INCLUDE_DIRS} ${glm_INCLUDE_DIRS} ${OPENGL_INCLUDE_DIR})
 
-#if(ARTIFICIAL)
-#        target_compile_definitions(scan PUBLIC ARTIFICIAL_INPUT)
-#endif()
+if(ARTIFICIAL)
+        target_compile_definitions(scan PUBLIC ARTIFICIAL_INPUT)
+endif()

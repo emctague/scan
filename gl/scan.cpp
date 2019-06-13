@@ -54,6 +54,9 @@ private:
     /// Update mesh when notified of new data.
     void updateMesh ();
 
+    /// Handle input
+    void handleInput ();
+
     /// The window handle
     GLFWwindow *window;
 
@@ -66,6 +69,21 @@ private:
 
     /// Number of vertices in the VBO
     int vertCount;
+
+    /// Position of camera
+    glm::vec3 pos;
+
+    /// Camera front
+    glm::vec3 front;
+
+    /// Camera up
+    glm::vec3 up;
+
+    /// Look dir
+    float pitch, yaw;
+
+    /// Last mouse pos
+    glm::vec2 lastPos;
 
     /// Current list of distances read from the input source.
     std::vector<float> distances;
@@ -85,18 +103,23 @@ private:
  */
 void App::run ()
 {
+    pos = glm::vec3(0, 3, 0);
+    front = glm::vec3(1, 0, 0);
+    up = glm::vec3(0, 1, 0);
+    pitch = 0.0f;
+    yaw = 0.0f;
+
     makeContext ();
     makeProgram ();
     makeVAO ();
     makeInputThread ();
-    makeProjection ();
 
     while (!glfwWindowShouldClose (window)) {
         glfwPollEvents ();
         updateMesh ();
+        handleInput ();
+        makeProjection ();
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glBindVertexArray (vao);
-	glUseProgram (program);
         glDrawArrays(GL_TRIANGLES, 0, vertCount);
         glfwSwapBuffers (window);
     }
@@ -191,7 +214,7 @@ void App::makeVAO ()
 void App::makeProjection ()
 {
 	projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 100.0f);
-	view = glm::mat4(1.0f);
+	view = glm::lookAt(pos, pos + front, up);
 	glUniformMatrix4fv(glGetUniformLocation(program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 	glUniformMatrix4fv(glGetUniformLocation(program, "view"), 1, GL_FALSE, glm::value_ptr(view));
 }
@@ -260,7 +283,7 @@ void App::updateMesh ()
 	// Convert distances to points
 	for (int i = 0; i < distances.size(); i++) {
 		glm::vec2 norm (1.0f, 0.0f);
-		float angle = i / distances.size() * (glm::pi<float>() * 2);
+		float angle = (float)i / (float)distances.size() * (glm::pi<float>() * 2.0f);
 		norm = glm::rotate (norm, angle);
 		glm::vec2 point = norm * distances[i];
 		points.push_back(point);
@@ -273,63 +296,63 @@ void App::updateMesh ()
 		int otheri = i - 1;
 		if (i == 0) otheri = points.size() - 1;
 
+        // Compute a normal
+        glm::vec3 a = glm::vec3(points[i].x, 0, points[i].y);
+        glm::vec3 b = glm::vec3(points[otheri].x, 0, points[otheri].y);
+        glm::vec3 c = glm::vec3(points[otheri].x, 10, points[otheri].y);
+        glm::vec3 normal = glm::normalize(glm::cross(c - a, b - a));
+
 		// Triangle A
 		// Bottom right -> bottom left -> top right
 		vertices.push_back(points[i].x);
+		vertices.push_back(0);
 		vertices.push_back(points[i].y);
-		vertices.push_back(0);
 
-		// Fake normals for now
-		vertices.push_back(0);
-		vertices.push_back(0);
-		vertices.push_back(0);
+		vertices.push_back(normal.x);
+		vertices.push_back(normal.y);
+		vertices.push_back(normal.z);
 
 		vertices.push_back(points[otheri].x);
+		vertices.push_back(0);
 		vertices.push_back(points[otheri].y);
-		vertices.push_back(0);
 
-		// fame nrm for now
-		vertices.push_back(0);
-		vertices.push_back(0);
-		vertices.push_back(0);
+		vertices.push_back(normal.x);
+		vertices.push_back(normal.y);
+		vertices.push_back(normal.z);
 
 		vertices.push_back(points[i].x);
-		vertices.push_back(points[i].y);
 		vertices.push_back(HEIGHT);
+		vertices.push_back(points[i].y);
 
-		// fame nrm for now
-		vertices.push_back(0);
-		vertices.push_back(0);
-		vertices.push_back(0);
+		vertices.push_back(normal.x);
+		vertices.push_back(normal.y);
+		vertices.push_back(normal.z);
 
 		// Triangle B
 		// Bottom left -> top left -> top right
 		vertices.push_back(points[otheri].x);
+		vertices.push_back(0);
 		vertices.push_back(points[otheri].y);
-		vertices.push_back(0);
 
-		// fame nrm for now
-		vertices.push_back(0);
-		vertices.push_back(0);
-		vertices.push_back(0);
+		vertices.push_back(normal.x);
+		vertices.push_back(normal.y);
+		vertices.push_back(normal.z);
 
 		vertices.push_back(points[otheri].x);
-		vertices.push_back(points[otheri].y);
 		vertices.push_back(HEIGHT);
+		vertices.push_back(points[otheri].y);
 
-		// fame nrm for now
-		vertices.push_back(0);
-		vertices.push_back(0);
-		vertices.push_back(0);
+		vertices.push_back(normal.x);
+		vertices.push_back(normal.y);
+		vertices.push_back(normal.z);
 
 		vertices.push_back(points[i].x);
-		vertices.push_back(points[i].y);
 		vertices.push_back(HEIGHT);
+		vertices.push_back(points[i].y);
 
-		// fame nrm for now
-		vertices.push_back(0);
-		vertices.push_back(0);
-		vertices.push_back(0);
+		vertices.push_back(normal.x);
+		vertices.push_back(normal.y);
+		vertices.push_back(normal.z);
 	}
 
 	glBindVertexArray(vao);
@@ -342,6 +365,70 @@ void App::updateMesh ()
         notifyNewData = false;
         lockNewData.unlock();
     }
+}
+
+void App::handleInput ()
+{
+    static bool alreadyDone;
+    static bool captured;
+    static bool once;
+    static float ptime;
+
+    float curTime = glfwGetTime ();
+    float dt = curTime - ptime;
+
+    float speed = 3.0f;
+    float sens = 90.0f;
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        if (!once) {
+            captured = !captured;
+            alreadyDone = false;
+            dt = 0.0f;
+            glfwSetInputMode(window, GLFW_CURSOR, captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+        }
+        once = true;
+    } else once = false;
+
+    if (captured) {
+        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            pos += speed * front * dt;
+        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+            pos -= speed * front * dt;
+        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+            pos -= glm::normalize(glm::cross(front, up)) * speed * dt;
+        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+            pos += glm::normalize(glm::cross(front, up)) * speed * dt;
+
+        double xp, yp;
+        glfwGetCursorPos(window, &xp, &yp);
+        glm::vec2 newPos(xp, yp);
+        auto diff = lastPos - newPos;
+        lastPos = newPos;
+
+        bool changed = (diff.x != 0.0f && diff.y != 0.0f);
+
+        if (alreadyDone) {
+            yaw -= diff.x * sens * dt;
+            pitch += diff.y * sens * dt;
+
+            if (pitch > 89.0f) pitch = 89.0f;
+            else if (pitch < -89.0f) pitch = -89.0f;
+
+            front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+            front.y = sin(glm::radians(pitch));
+            front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+            front = glm::normalize(front);
+
+            glm::vec3 right = glm::normalize(glm::cross(glm::vec3(0,1,0), front));
+            up = glm::cross(front, right);
+        }
+
+        if (changed) alreadyDone = true;
+
+    }
+
+    ptime = curTime;
 }
 
 int
