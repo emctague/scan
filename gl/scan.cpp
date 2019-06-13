@@ -95,6 +95,8 @@ void App::run ()
         glfwPollEvents ();
         updateMesh ();
         glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glBindVertexArray (vao);
+	glUseProgram (program);
         glDrawArrays(GL_TRIANGLES, 0, vertCount);
         glfwSwapBuffers (window);
     }
@@ -333,7 +335,7 @@ void App::updateMesh ()
 	glBindVertexArray(vao);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_DYNAMIC_DRAW);
 
-	vertCount = vertices.size();
+	vertCount = vertices.size() / 6;
 
         std::cout << "Done Regenerating Mesh" << std::endl;
 
