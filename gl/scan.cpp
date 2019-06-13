@@ -136,6 +136,7 @@ void App::makeContext ()
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE);
     window = glfwCreateWindow (512, 512, "Scan", nullptr, nullptr);
+    glfwSwapInterval(1);
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
     glewInit ();
