@@ -15,7 +15,7 @@ main ()
 {
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(lightPos - FragPos);
-    float diff = max(dot(norm, lightDir), 0.0) / (falloff * pow(length(lightPos - FragPos), 2.0));
+    float diff = max(dot(norm, lightDir), 0.0) * 1.0 / (falloff * pow(length(lightPos - FragPos), 2.0));
     vec3 diffuse = diff * vec3(1.0, 0.9, 0.9);
     vec3 ambient = 0.1 * vec3(0.9, 0.9, 1.0);
     vec3 result = (ambient + diffuse) * objectColor;

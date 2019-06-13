@@ -59,19 +59,20 @@ def getDistance():
 
 @task("Collecting Multiple Samples", "cm")
 def getLongDistance():
-    NUMPOLLS=10
+    NUMPOLLS=3
     total=0
     for i in range(NUMPOLLS):
         total += getDistance()
     return total / NUMPOLLS
 
-NUM_ANGLES=360
-NUM_STEPS=5
+NUM_ANGLES=50
+NUM_STEPS=30
 
 @task("Poll All Data", "complete")
 def pollData():
     for i in range(0, NUM_ANGLES):
-        print(getLongDistance())
+        print(int(getLongDistance() * 100) / 100.0)
+        sys.stdout.flush()
         step(NUM_STEPS)
     return True
 
