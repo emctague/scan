@@ -1,3 +1,4 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -109,10 +110,6 @@ void App::makeContext ()
     glfwWindowHint (GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint (GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint (GLFW_RESIZABLE, GLFW_FALSE);
-    if (GLEW_KHR_debug) {
-	    std::cout << "DBGO" << std::endl;
-	    glfwWindowHint (GLFW_OPENGL_DEBUG_CONTEXT, 1);
-    }
     window = glfwCreateWindow (512, 512, "Scan", nullptr, nullptr);
     glfwMakeContextCurrent(window);
     glewExperimental = GL_TRUE;
@@ -224,6 +221,16 @@ void App::makeInputThread ()
     {
         float value;
 
+#ifdef ARTIFICIAL_INPUT
+        for (int i = 0; i < 20; i++) {
+            value = 1.0f + (i / 10.0f);
+            std::cout << "[New Value] " << value << std::endl;
+            lockNewData.lock();
+            distances.push_back(value);
+            notifyNewData = true;
+            lockNewData.unlock();
+        }
+#else
         while (std::cin >> value) {
             lockNewData.lock();
             std::cout << "[New Value] " << value << std::endl;
@@ -231,6 +238,7 @@ void App::makeInputThread ()
             notifyNewData = true;
             lockNewData.unlock();
         }
+#endif
     });
 }
 
