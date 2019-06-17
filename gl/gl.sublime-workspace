@@ -8,15 +8,6 @@
 	"buffers":
 	[
 		{
-			"file": "scan.cpp",
-			"settings":
-			{
-				"buffer_size": 5548,
-				"encoding": "UTF-8",
-				"line_ending": "Unix"
-			}
-		},
-		{
 			"file": "gl.sublime-project",
 			"settings":
 			{
@@ -81,6 +72,7 @@
 	],
 	"file_history":
 	[
+		"/home/t/Documents/scan/gl/scan.cpp",
 		"/home/t/Documents/scan/gl/gl.sublime-project",
 		"/home/t/.config/sublime-text-3/Packages/User/unreg.py"
 	],
@@ -122,43 +114,6 @@
 			[
 				{
 					"buffer": 0,
-					"file": "scan.cpp",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 5548,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								346,
-								346
-							]
-						],
-						"settings":
-						{
-							"SL.34.region_keys":
-							[
-								"SL.clang++.Gutter.|region.yellowish markup.warning.sublime_linter|dot",
-								"SL.clang++.Highlights.|2f6dfe76fbbfadb339b0b0f7530683bed41f75d1c8d2d916e3f4e465f603adad|region.yellowish markup.warning.sublime_linter|32",
-								"SL.clang++.Highlights.|597d859af024245b3d37ed671afc09c3a3fc2733c9cd5d0f6aab597fafbd5d40|region.yellowish markup.warning.sublime_linter|32",
-								"sublime_linter.protected_regions"
-							],
-							"syntax": "Packages/C++/C++.sublime-syntax",
-							"tab_size": 4,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
 					"file": "gl.sublime-project",
 					"semi_transient": false,
 					"settings":
@@ -183,11 +138,11 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
+					"buffer": 1,
 					"file": "/home/t/.config/sublime-text-3/Packages/User/CMake.sublime-build",
 					"semi_transient": false,
 					"settings":
@@ -211,7 +166,7 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 1,
 					"type": "text"
 				}
 			]

@@ -8,7 +8,7 @@ out vec4 FragColor;
 
 const vec3 lightPos = vec3(0.5, 6.0, 0.5);
 const vec3 objectColor = vec3(0.8, 0.5, 0.5);
-const float falloff = 1.0;
+const float falloff = 0.05;
 
 void
 main ()
